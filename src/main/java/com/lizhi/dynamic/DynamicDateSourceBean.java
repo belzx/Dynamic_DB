@@ -15,8 +15,6 @@ public class DynamicDateSourceBean implements Serializable {
     private String         testSql;
     private String         password;
     private String         driverClassName = "com.mysql.jdbc.Driver";
-    private int            enabled;
-    private java.util.Date createDate;
     private int maxLifetime = 0;
     private int minPoolSize = 3;
     private int maxPoolSize = 80;

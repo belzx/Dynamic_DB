@@ -8,6 +8,8 @@ ps：以上来自百度
 ~~~
 集合mybatis  mysql框架使用
 ~~~
+#### 至于利用aop切换数据源的话，则需要自己去配置了~~~
+
 ####  配置
 ~~~
 mybatis.typeAliasesPackage=com.lizhi.bean
@@ -16,22 +18,45 @@ mybatis.mapperLocations=classpath:mapper/*.xml
 spring.jta.atomikos.properties.log-base-dir=  ../logs
 spring.jta.transaction-manager-id= txManager
 
-#添加默认数据源
-zx.dynamic.default.jdbc.url=jdbc:mysql://localhost:3306/lzx-blog?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-zx.dynamic.default.jdbc.username=root
-zx.dynamic.default.jdbc.password=123456
+#the default dynamic
+dynamic.default.url=jdbc:mysql://xxx/lzx-blog?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+dynamic.default.username=root
+dynamic.default.password=123456
 
-#添加第二个数据源
-#dataSourceName  是数据库的名称，默认数据源的名称为default
-zx.dynamic.silver1.jdbc.dataSourceName=t1
-zx.dynamic.silver1.jdbc.url=jdbc:mysql://182.254.xxx.xxx:3306/lizhixiongdeblog?useUnicode=true&characterEncoding=utf-8
-zx.dynamic.silver1.jdbc.username=root
-zx.dynamic.silver1.jdbc.password=123456
+#the first dynamic
+dynamic.silver1.dataSourceName=t1
+dynamic.silver1.url=jdbc:mysql://xxx:3306/test1?useUnicode=true&characterEncoding=utf-8
+dynamic.silver1.username=root
+dynamic.silver1.password=121929
+
+#the second dynamic
+dynamic.silver2.dataSourceName=t2
+dynamic.silver2.url=jdbc:mysql://xxx:3306/test2?useUnicode=true&characterEncoding=utf-8
+dynamic.silver2.username=root
+dynamic.silver2.password=121929
 
 ~~~
-####  配置
 #### 如何使用
 ~~~
 DynamicDataSource.use("t1") //切换数据源到t1
+DynamicDataSource.use("t2") //切换数据源到t2
 DynamicDataSource.useDefault(); //切换数据源为默认
+~~~
+### 效果
+~~~
+   /**
+     * 同时修改两个数据库中的数据
+     * 只要某一个抛出异常，则两边同时回滚
+     * 保证一致性
+     */
+    @Transactional
+    public void getShop(User user ,TestTask testtask) {
+        //修改默认数据库中的用户
+        DynamicDataSource.useDefault();
+        userMapper.updateUser(user1);
+        
+        //修改t1数据库中的testTask属性
+        DynamicDataSource.use("t1");
+        testTaskMapper.updateTestTask(testtask);
+    }
 ~~~

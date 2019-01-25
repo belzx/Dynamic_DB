@@ -17,12 +17,12 @@ import java.sql.SQLException;
  * 1：作为datasource，获取connection
  * 2：通过service 操作datasource
  */
-public class DynamicXaDataSourceImpl extends AbstractDataSource implements DynamicDataSource, XADataSource, Closeable {
-    Logger logger            = LoggerFactory.getLogger(DynamicXaDataSourceImpl.class);
+public class DynamicXaDataSource extends AbstractDataSource implements DynamicDataSource, XADataSource, Closeable {
+    Logger logger            = LoggerFactory.getLogger(DynamicXaDataSource.class);
     private DataSource defaultDataSource = null;
     protected DynamicDataSourceService dynamicDataSourceService;
 
-    public DynamicXaDataSourceImpl(DataSource defaultDataSource) {
+    public DynamicXaDataSource(DataSource defaultDataSource) {
         Assert.notNull(defaultDataSource);
         this.defaultDataSource = defaultDataSource;
     }
@@ -54,7 +54,7 @@ public class DynamicXaDataSourceImpl extends AbstractDataSource implements Dynam
 
     public DataSource getActiveDataSource() {
         String sourceId = DynamicDataSource.getActiveDataSourceId();
-        logger.info("use datasource:{}", sourceId == null ? DataSourceHolder.DEFAULT_DATASOURCE_NAME : sourceId);
+        logger.info("use datasource:{}", sourceId == null ? DynamicDataSource.DEFAULT_DATASOURCE_NAME : sourceId);
         if (sourceId == null || dynamicDataSourceService == null) return defaultDataSource;
         DataSource dataSource = dynamicDataSourceService.getDataSource(sourceId);
         if (dataSource == null) {

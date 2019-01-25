@@ -22,7 +22,7 @@ public class DynamicDataSourceService {
 
     private static Logger logger = LoggerFactory.getLogger(DynamicDataSourceService.class);
 
-    //用来维护缓存的 数据源哈希  ： 数据源信息
+    //用来维护缓存的 数据源名称  ： 数据源信息
     private static Map<String, CacheInfo> cache = new ConcurrentHashMap<>();
 
     protected CacheInfo getCache(String datasourceName) {
@@ -52,11 +52,16 @@ public class DynamicDataSourceService {
         }
     }
 
+    /**
+     * 初始化数据源
+     */
     private DataSource initDataSource(DynamicDateSourceBean dynamicDateSourceBean) {
         AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
         ds.setXaDataSourceClassName("com.alibaba.druid.pool.xa.DruidXADataSource");
         ds.setUniqueResourceName(dynamicDateSourceBean.getName());
+        //配置账号密码
         ds.setXaProperties(getProperties(dynamicDateSourceBean));
+        //配置其它参数
         ds.setMaxLifetime(dynamicDateSourceBean.getMaxLifetime());
         ds.setMinPoolSize(dynamicDateSourceBean.getMinPoolSize());
         ds.setMaxPoolSize(dynamicDateSourceBean.getMaxPoolSize());

@@ -15,6 +15,10 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 
 public interface DynamicDataSource extends DataSource {
+
+    /**默认数据源的名称*/
+    String DEFAULT_DATASOURCE_NAME = "default";
+
     Logger logger = LoggerFactory.getLogger(DynamicDataSource.class);
 
     /**
@@ -40,7 +44,7 @@ public interface DynamicDataSource extends DataSource {
     }
 
     static void useDefault() {
-        use(DataSourceHolder.DEFAULT_DATASOURCE_NAME);
+        use(DEFAULT_DATASOURCE_NAME);
     }
 
     /**

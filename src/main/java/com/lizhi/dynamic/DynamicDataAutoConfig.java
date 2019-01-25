@@ -33,20 +33,26 @@ public class DynamicDataAutoConfig {
 
     private static Logger logger = LoggerFactory.getLogger(DynamicDataAutoConfig.class);
 
+    public static final String BASE_PATH = "dynamic.%s.";
+
+    /**
+     * 配置默认数据库填写参数如下
+     * dynamic.default.url=xxx
+     * dynamic.default.username=xxx
+     * ....
+     */
+    public static final String DYNAMIC_PROPERTIE_DEFAULT= DynamicDataSource.DEFAULT_DATASOURCE_NAME;
+
+    /**
+     * 配置动态数据库填写参数如下
+     * dynamic.silver1.url=xxx
+     * dynamic.silver1.username=xxx
+     * ....
+     */
+    public static final String DYNAMIC_PROPERTIE_PRIFIX= "silver";
+
     @Autowired
     private Environment env;
-
-    public static final String BASE_PATH = "zx.dynamic.";
-
-    public static final String NAME_TEMPLATE = BASE_PATH + "%s.jdbc.dataSourceName";
-
-    public static final String DRIVER_TEMPLATE = BASE_PATH + "%s.jdbc.driverClassName";
-
-    public static final String URL_TEMPLATE = BASE_PATH + "%s.jdbc.url";
-
-    public static final String USERNAME_TEMPLATE = BASE_PATH + "%s.jdbc.username";
-
-    public static final String PASSWORD_TEMPLATE = BASE_PATH + "%s.jdbc.password";
 
     @Bean(name = "sqlSessionFactory")
     public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource) throws Exception {
@@ -73,26 +79,23 @@ public class DynamicDataAutoConfig {
         return new DynamicDataSourceService();
     }
 
-    private DynamicXaDataSourceImpl dynamicXaDataSource;
+
 
     @Primary
     @Bean(name = "dataSource", destroyMethod = "close") //在方法返回之后，init 启动init，初始化dataSource
     @ConditionalOnMissingBean(DataSource.class)
     public DataSource dataSource(@Qualifier("dynamicDataSourceService") DynamicDataSourceService dynamicDataSourceService) {
         //创建默认
-        DataSource adefault = dynamicDataSourceService.createDataSourceSyn(build(DataSourceHolder.DEFAULT_DATASOURCE_NAME));
+        DataSource adefault = dynamicDataSourceService.createDataSourceSyn(build(DYNAMIC_PROPERTIE_DEFAULT));
         //创建其他的数据源
         for(int i = 1 ;;i++){
-            DynamicDateSourceBean build = build("silver" + i);
+            DynamicDateSourceBean build = build(DYNAMIC_PROPERTIE_PRIFIX + i);
             if(build == null){
                 break;
             }else {
-                dynamicDataSourceService.createDataSourceSyn(build);
+               dynamicDataSourceService.createDataSourceSyn(build);
             }
         }
-        dynamicXaDataSource = new DynamicXaDataSourceImpl(adefault);
-        dynamicXaDataSource.setDynamicDataSourceService(dynamicDataSourceService);
-        DataSourceHolder.install(dynamicXaDataSource);
         return adefault;
     }
 
@@ -102,7 +105,11 @@ public class DynamicDataAutoConfig {
      * @return
      */
     @Bean(name = "dynamicDataSource")
-    public DynamicXaDataSourceImpl dynamicXaDataSource(@Qualifier("dataSource") DataSource dataSource) {
+    public DynamicXaDataSource dynamicXaDataSource(@Qualifier("dataSource") DataSource dataSource,
+                                                       @Qualifier("dynamicDataSourceService") DynamicDataSourceService dynamicDataSourceService) {
+        DynamicXaDataSource  dynamicXaDataSource = new DynamicXaDataSource(dataSource);
+        dynamicXaDataSource.setDynamicDataSourceService(dynamicDataSourceService);
+        DataSourceHolder.install(dynamicXaDataSource);
         return dynamicXaDataSource;
     }
 
@@ -130,13 +137,16 @@ public class DynamicDataAutoConfig {
         return manager;
     }
 
+    /**
+     * 读取环境变量信息
+     */
     protected DynamicDateSourceBean build(String prefix) {
         DynamicDateSourceBean dynamicDateSourceBean = new DynamicDateSourceBean();
 
-        if (prefix.equals(DataSourceHolder.DEFAULT_DATASOURCE_NAME)) {
-            dynamicDateSourceBean.setName(DataSourceHolder.DEFAULT_DATASOURCE_NAME);
+        if (prefix.equals(DynamicDataSource.DEFAULT_DATASOURCE_NAME)) {
+            dynamicDateSourceBean.setName(DynamicDataSource.DEFAULT_DATASOURCE_NAME);
         } else {
-            String datasourceName = env.getProperty(String.format(NAME_TEMPLATE, prefix));
+            String datasourceName = env.getProperty(String.format( BASE_PATH + "dataSourceName", prefix));
             if (StringUtils.isNullOrEmpty(datasourceName)) {
                 return null;
             } else {
@@ -144,26 +154,36 @@ public class DynamicDataAutoConfig {
             }
         }
 
-        String driverClassName = env.getProperty(String.format(DRIVER_TEMPLATE, prefix));
-        String url = env.getProperty(String.format(URL_TEMPLATE, prefix));
-        String userName = env.getProperty(String.format(USERNAME_TEMPLATE, prefix));
-        String password = env.getProperty(String.format(PASSWORD_TEMPLATE, prefix));
+        logger.info("Start to init datasource name is :[{}],DynamicDataSource index[{}]",dynamicDateSourceBean.getName(),prefix);
 
-        if(!StringUtils.isNullOrEmpty(driverClassName)){
-            dynamicDateSourceBean.setDriverClassName(driverClassName);
-        }
+        String url = env.getProperty(String.format(BASE_PATH + "url", prefix));
+        String userName = env.getProperty(String.format(BASE_PATH + "username", prefix));
+        String password = env.getProperty(String.format(BASE_PATH + "password", prefix));
+        String driverClassName = env.getProperty(String.format( BASE_PATH + "driverClassName", prefix));
+        String testSql = env.getProperty(String.format(BASE_PATH + "testSql", prefix));
+        String maxLifetime = env.getProperty(String.format(BASE_PATH + "maxLifetime", prefix));
+        String minPoolSize = env.getProperty(String.format(BASE_PATH + "minPoolSize", prefix));
+        String maxPoolSize = env.getProperty(String.format(BASE_PATH + "maxPoolSize", prefix));
+        String borrowConnectionTimeout = env.getProperty(String.format(BASE_PATH + "borrowConnectionTimeout", prefix));
+        String reapTimeout = env.getProperty(String.format(BASE_PATH + "reapTimeout", prefix));
+        String maxIdleTime = env.getProperty(String.format(BASE_PATH + "maxIdleTime", prefix));
+        String maintenanceInterval = env.getProperty(String.format(BASE_PATH + "maintenanceInterval", prefix));
+        String defaultIsolationLevel = env.getProperty(String.format(BASE_PATH + "defaultIsolationLevel", prefix));
 
-        if(!StringUtils.isNullOrEmpty(url)){
-            dynamicDateSourceBean.setUrl(url);
-        }
+        if(!StringUtils.isNullOrEmpty(driverClassName)) dynamicDateSourceBean.setDriverClassName(driverClassName);
+        if(!StringUtils.isNullOrEmpty(url)) dynamicDateSourceBean.setUrl(url);
+        if(!StringUtils.isNullOrEmpty(userName)) dynamicDateSourceBean.setUsername(userName);
+        if(!StringUtils.isNullOrEmpty(password)) dynamicDateSourceBean.setPassword(password);
+        if(!StringUtils.isNullOrEmpty(testSql)) dynamicDateSourceBean.setTestSql(testSql);
+        if(!StringUtils.isNullOrEmpty(maxLifetime)) dynamicDateSourceBean.setMaxLifetime(Integer.valueOf(maxLifetime));
+        if(!StringUtils.isNullOrEmpty(minPoolSize)) dynamicDateSourceBean.setMinPoolSize(Integer.valueOf(minPoolSize));
+        if(!StringUtils.isNullOrEmpty(maxPoolSize)) dynamicDateSourceBean.setMaxPoolSize(Integer.valueOf(maxPoolSize));
+        if(!StringUtils.isNullOrEmpty(borrowConnectionTimeout)) dynamicDateSourceBean.setBorrowConnectionTimeout(Integer.valueOf(borrowConnectionTimeout));
+        if(!StringUtils.isNullOrEmpty(reapTimeout)) dynamicDateSourceBean.setReapTimeout(Integer.valueOf(reapTimeout));
+        if(!StringUtils.isNullOrEmpty(maxIdleTime)) dynamicDateSourceBean.setMaxIdleTime(Integer.valueOf(maxIdleTime));
+        if(!StringUtils.isNullOrEmpty(maintenanceInterval)) dynamicDateSourceBean.setMaintenanceInterval(Integer.valueOf(maintenanceInterval));
+        if(!StringUtils.isNullOrEmpty(defaultIsolationLevel)) dynamicDateSourceBean.setDefaultIsolationLevel(Integer.valueOf(defaultIsolationLevel));
 
-        if(!StringUtils.isNullOrEmpty(userName)){
-            dynamicDateSourceBean.setUsername(userName);
-        }
-
-        if(!StringUtils.isNullOrEmpty(password)){
-            dynamicDateSourceBean.setPassword(password);
-        }
         return dynamicDateSourceBean;
     }
 
