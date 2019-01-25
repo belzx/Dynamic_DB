@@ -8,9 +8,9 @@ ps：以上来自百度
 ~~~
 集合mybatis  mysql框架使用
 ~~~
-#### 至于利用aop切换数据源的话，则需要自己去配置了~~~
 
-####  配置
+
+####  文件配置
 ~~~
 mybatis.typeAliasesPackage=com.lizhi.bean
 mybatis.mapperLocations=classpath:mapper/*.xml
@@ -35,13 +35,40 @@ dynamic.silver2.url=jdbc:mysql://xxx:3306/test2?useUnicode=true&characterEncodin
 dynamic.silver2.username=root
 dynamic.silver2.password=121929
 
+#dynamic.silver2.testSql=
+#dynamic.silver2.maxLifetime=
+#dynamic.silver2.minPoolSize=
+#dynamic.silver2.maxPoolSize=
+#dynamic.silver2.borrowConnectionTimeout=
+#dynamic.silver2.reapTimeout=
+#dynamic.silver2.maxIdleTime=
+#dynamic.silver2.maintenanceInterval=
+#dynamic.silver2.defaultIsolationLevel=
+
 ~~~
+
+####  代码中动态加载
+~~~
+  @Autowired 
+  DynamicDataSourceService dynamicDataSourceService
+
+  DynamicDateSourceBean dynamicDateSourceBean = new DynamicDateSourceBean():
+  dynamicDateSourceBean.setName(xxx); //数据源名称
+  dynamicDateSourceBean.setUrl(xxx);
+  dynamicDateSourceBean.setUserName(xxx);
+  dynamicDateSourceBean.setPassword(xxx);
+  dynamicDataSourceService.createDataSourceSyn(dynamicDateSourceBean);//创建数据源，并加载到缓存中
+~~~
+
+
 #### 如何使用
 ~~~
 DynamicDataSource.use("t1") //切换数据源到t1
 DynamicDataSource.use("t2") //切换数据源到t2
 DynamicDataSource.useDefault(); //切换数据源为默认
 ~~~
+#### 至于利用aop切换数据源的话，则需要自己去配置了~~~
+
 ### 效果
 ~~~
    /**
